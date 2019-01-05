@@ -1,0 +1,78 @@
+version: 2
+jobs:
+  build:
+    docker:
+      - image: circleci/golang
+    steps:
+      - checkout
+      - run:
+          name: Determine which projects have changed and trigger the builds
+          command: |
+            git diff --no-commit-id --name-only -r `git log -n 2 --oneline --pretty=format:"%h" | tail -n1` | cut -d/ -f1 | sort -u > projects
+            echo -e "Modified directories:`cat projects`\n"
+
+            projects_inc_dep=(`cat projects`)
+            echo -e "Calculating dependencies\n"
+            for dir in `ls -d */`; do
+              for dep in `go list -f '{{ .Deps }}' ./${dir} 2>/dev/null`; do
+                for project_dep in `echo $dep | grep github.com/tufin/circleci-monorepo | egrep -v "vendor|${dir%\/}"`; do
+                  if [[ " ${projects_inc_dep[@]} " =~ " ${project_dep##*\/} " ]] && ! [[ " ${projects_inc_dep[@]} " =~ " ${dir%\/} " ]]; then
+                    projects_inc_dep+=(${dir%\/})
+                  fi
+                done
+              done
+            done
+
+            echo -e "Building: ${projects_inc_dep[@]}\n"
+            for project in ${projects_inc_dep[@]}; do
+              if grep -Fxq $project project-dirs; then
+                printf "\nTriggerring build for project: "$project
+                curl -s -u ${CIRCLE_TOKEN}: \
+                  -d build_parameters[CIRCLE_JOB]=${project} \
+                  https://circleci.com/api/v1.1/project/github/Tufin/circleci-monorepo/tree/$CIRCLE_BRANCH
+              fi
+            done
+  service1:
+    working_directory: /go/src/github.com/tufin/circleci-monorepo
+    docker:
+      - image: tufinim/circleci-go:master
+    environment:
+      PROJECT_NAME: service1
+      TEST_RESULTS: /tmp/test-results
+    steps:
+      - checkout
+      - run:
+          name: Build
+          command: |
+            /scripts/go_build_fast.sh ${PROJECT_NAME} ${PROJECT_NAME}
+      - run:
+          name: Run Tests
+          command: |
+            /scripts/go_test_mono.sh ${TEST_RESULTS} ${PROJECT_NAME}
+      - store_artifacts:
+          path: /tmp/test-results
+          destination: raw-test-output
+      - store_test_results:
+          path: /tmp/test-results
+  service2:
+    working_directory: /go/src/github.com/tufin/circleci-monorepo
+    docker:
+      - image: tufinim/circleci-go:master
+    environment:
+      PROJECT_NAME: service2
+      TEST_RESULTS: /tmp/test-results
+    steps:
+      - checkout
+      - run:
+          name: Build
+          command: |
+            /scripts/go_build_fast.sh ${PROJECT_NAME} ${PROJECT_NAME}
+      - run:
+          name: Run Tests
+          command: |
+            /scripts/go_test_mono.sh ${TEST_RESULTS} ${PROJECT_NAME}
+      - store_artifacts:
+          path: /tmp/test-results
+          destination: raw-test-output
+      - store_test_results:
+          path: /tmp/test-results
