@@ -35,7 +35,7 @@ jobs:
   service1:
     working_directory: /go/src/github.com/tufin/circleci-monorepo
     docker:
-      - image: tufinim/circleci-go:master
+      - image: tufin/circleci-golang
     environment:
       PROJECT_NAME: service1
       TEST_RESULTS: /tmp/test-results
@@ -44,11 +44,11 @@ jobs:
       - run:
           name: Build
           command: |
-            /scripts/go_build_fast.sh ${PROJECT_NAME} ${PROJECT_NAME}
+            /scripts/go_build.sh ${PROJECT_NAME} ${PROJECT_NAME}
       - run:
           name: Run Tests
           command: |
-            /scripts/go_test_mono.sh ${TEST_RESULTS} ${PROJECT_NAME}
+            /scripts/go_test.sh ${TEST_RESULTS} ${PROJECT_NAME}
       - store_artifacts:
           path: /tmp/test-results
           destination: raw-test-output
@@ -57,7 +57,7 @@ jobs:
   service2:
     working_directory: /go/src/github.com/tufin/circleci-monorepo
     docker:
-      - image: tufinim/circleci-go:master
+      - image: tufin/circleci-golang
     environment:
       PROJECT_NAME: service2
       TEST_RESULTS: /tmp/test-results
@@ -66,11 +66,11 @@ jobs:
       - run:
           name: Build
           command: |
-            /scripts/go_build_fast.sh ${PROJECT_NAME} ${PROJECT_NAME}
+            /scripts/go_build.sh ${PROJECT_NAME} ${PROJECT_NAME}
       - run:
           name: Run Tests
           command: |
-            /scripts/go_test_mono.sh ${TEST_RESULTS} ${PROJECT_NAME}
+            /scripts/go_test.sh ${TEST_RESULTS} ${PROJECT_NAME}
       - store_artifacts:
           path: /tmp/test-results
           destination: raw-test-output
