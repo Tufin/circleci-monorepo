@@ -13,3 +13,8 @@ To add a service:
 
 How does it work?  
 Everytime you commit a change, it finds the modified files, identifies which directories they reside in, adds dependant directories and calls CircleCI APIs to run builds for these directories.
+
+Docker image used for build and test:
+
+- Image: https://hub.docker.com/r/tufin/circleci-golang
+- Source: https://github.com/Tufin/circleci-golang
